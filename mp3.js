@@ -22,6 +22,9 @@ var pMatrix = glMatrix.mat4.create();
 /** @global The Normal matrix */
 var nMatrix = glMatrix.mat3.create();
 
+/** @global The View matrix */
+var vMatrix = glMatrix.mat3.create();
+
 /** @global An object holding the geometry for a 3D terrain */
 var myTerrain;
 
@@ -97,19 +100,19 @@ function handleKeyDown(event) {
   currentlyPressedKeys[event.key] = true;
   if (currentlyPressedKeys["ArrowUp"])
   {
-   eulerY = (eulerY + 5) % 360;
+   vec3.rotateX(eyePt,eyePt,viewPt,degToRad(5));
   }
   else if (currentlyPressedKeys["ArrowDown"])
   {
-   eulerY = (eulerY - 5) % 360;
+   vec3.rotateX(eyePt,eyePt,viewPt,-degToRad(5));
   }
   else if (currentlyPressedKeys["ArrowLeft"])
   {
-   eulerX = (eulerX - 5) % 360;
+   vec3.rotateY(eyePt,eyePt,viewPt,-degToRad(5));
   }
   else if (currentlyPressedKeys["ArrowRight"])
   {
-   eulerX = (eulerX + 5) % 360;
+   vec3.rotateY(eyePt,eyePt,viewPt,degToRad(5));
   }
 }
 
@@ -128,6 +131,7 @@ function handleKeyUp(event) {
  */
 function uploadModelViewMatrixToShader() {
   gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+  gl.uniformMatrix4fv(shaderProgram.vMatrixUniform, false, vMatrix);
 }
 
 //-------------------------------------------------------------------------
@@ -167,7 +171,7 @@ function setMatrixUniforms() {
  */
 function setSkyboxUniforms() {
     gl.useProgram(skyboxProgram);
-    gl.uniformMatrix4fv(skyboxProgram.mvMatrixUniform, false, mvMatrix);
+    gl.uniformMatrix4fv(skyboxProgram.vMatrixUniform, false, vMatrix);
     gl.uniformMatrix4fv(skyboxProgram.pMatrixUniform, false, pMatrix);
 }
 
@@ -285,6 +289,7 @@ function setupShaders() {
   gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
 
   shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+  shaderProgram.vMatrixUniform = gl.getUniformLocation(shaderProgram, "uVMatrix");
   shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
   shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
   shaderProgram.uniformLightPositionLoc = gl.getUniformLocation(shaderProgram, "uLightPosition");
@@ -316,7 +321,7 @@ function setupSkyBoxShaders() {
 
   gl.useProgram(skyboxProgram);
 
-  skyboxProgram.mvMatrixUniform = gl.getUniformLocation(skyboxProgram, "uMVMatrix");
+  skyboxProgram.vMatrixUniform = gl.getUniformLocation(skyboxProgram, "uVMatrix");
   skyboxProgram.pMatrixUniform = gl.getUniformLocation(skyboxProgram, "uPMatrix");
 
   skyboxProgram.vertexPositionAttribute = gl.getAttribLocation(skyboxProgram, "aVertexPosition");
@@ -367,19 +372,16 @@ function draw() {
                      gl.viewportWidth / gl.viewportHeight,
                      0.5, 200.0);
 
+    // Then generate the lookat matrix and initialize the MV matrix to that view
+    glMatrix.mat4.lookAt(vMatrix,eyePt,viewPt,up);
+
     if(myMesh.loaded())
     {
       mvPush();
-      glMatrix.mat4.rotateX(mvMatrix, mvMatrix, eulerX);
-      glMatrix.mat4.rotateY(mvMatrix, mvMatrix, eulerY);
-
-      // Then generate the lookat matrix and initialize the MV matrix to that view
-      glMatrix.mat4.lookAt(mvMatrix,eyePt,viewPt,up);
-
+      glMatrix.mat4.rotateY(mvMatrix, mvMatrix, degToRad(eulerY));
+      glMatrix.mat4.multiply(mvMatrix, vMatrix, mvMatrix);
       setMatrixUniforms();
       setLightUniforms(lightPosition,lAmbient,lDiffuse,lSpecular);
-      setSkyboxUniforms();
-      drawTriangles();
 
       if(document.getElementById("reflective").checked) //Mirror effect
       {
@@ -393,10 +395,12 @@ function draw() {
       {
         gl.uniform1i(shaderProgram.uniformTextureLoc, 2);
       }
+
+      setSkyboxUniforms();
+      drawTriangles();
+      requestAnimationFrame(draw);
       mvPop();
     }
-
-    requestAnimationFrame(draw);
 
 }
 //----------------------------------------------------------------------------------
@@ -506,28 +510,20 @@ function setupTexture()
 function setSkyboxMesh()
 {
   var skyVertices =
-  [-50, -50, 50,
-    50, -50, 50,
-    50, 50, 50,
-    -50, 50, 50,
-    -50, -50, -50,
-    50, -50, -50,
-    50, 50, -50,
-    -50, 50, -50];
-  var skyFaces = [];
-  var currFace = [];
-  currFace = [0, 1, 2, 0, 3, 2];
-  skyFaces.push(currFace);
-  currFace = [4, 5, 6, 4, 7, 6];
-  skyFaces.push(currFace);
-  currFace = [3, 2, 6, 3, 7, 6];
-  skyFaces.push(currFace);
-  currFace = [0, 1, 5, 0, 4, 5];
-  skyFaces.push(currFace);
-  currFace = [2, 1, 5, 2, 6, 5];
-  skyFaces.push(currFace);
-  currFace = [4, 0, 3, 4, 7, 35];
-  skyFaces.push(currFace);
+  [ -30,30,30,  30,30,30, -30,-30,30, 30,-30,30,
+    -30,30,-30, -30,30,30,  -30,-30,-30,  -30,-30,30,
+    30,30,30, 30,30,-30,  30,-30,30,  30,-30,-30,
+    -30,-30,30, 30,-30,30,  -30,-30,-30,  30,-30,-30,
+    30,30,-30,  -30,30,-30, 30,-30,-30, -30,-30,-30,
+    -30,30,-30, 30,30,-30,  -30,30,30,  30,30,30
+  ];
+  var skyFaces =
+  [ 0,1,2,1,2,3,  //front
+    4,5,6,5,6,7,  //left
+    8,9,10,9,10,11,  //right
+    12,13,14,13,14,15,  //bottom
+    16,17,18,17,18,19,  //back
+    20,21,22,21,22,23]; //top
 
   // Specify normals to be able to do lighting calculations
   this.VertexPositionBuffer = gl.createBuffer();
@@ -552,7 +548,7 @@ function setSkyboxMesh()
 */
 function drawTriangles(){
     gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, this.VertexPositionBuffer.itemSize,
+    gl.vertexAttribPointer(skyboxProgram.vertexPositionAttribute, this.VertexPositionBuffer.itemSize,
                      gl.FLOAT, false, 0, 0);
 
     //Draw
@@ -569,8 +565,8 @@ function drawTriangles(){
   gl = createGLContext(canvas);
   setupShaders();
   setupMesh("teapot.obj");
-  setSkyboxMesh();
   setupSkyBoxShaders();
+  setSkyboxMesh();
   setupTexture();
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
