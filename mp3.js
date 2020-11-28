@@ -385,12 +385,12 @@ function draw() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // We'll use perspective
-    mat4.perspective(pMatrix,degToRad(45),
+    glMatrix.mat4.perspective(pMatrix,degToRad(45),
                      gl.viewportWidth / gl.viewportHeight,
                      0.1, 500.0);
 
     // Then generate the lookat matrix and initialize the view matrix to that view
-    mat4.lookAt(vMatrix,eyePt,viewPt,up);
+    glMatrix.mat4.lookAt(vMatrix,eyePt,viewPt,up);
 
     //Draw Mesh
     //ADD an if statement to prevent early drawing of myMesh
@@ -525,26 +525,26 @@ function setSkyboxMesh() {
  ]
  var faceCount = skyFaces.length;
 
-   var model = {};
-   model.vertexPositions = new Float32Array(skyVertices);
-   model.indices = new Uint32Array(skyFaces);
-   model.coordsBuffer = gl.createBuffer();
-   model.indexBuffer = gl.createBuffer();
-   model.count = model.indices.length;
-   gl.bindBuffer(gl.ARRAY_BUFFER, model.coordsBuffer);
-   gl.bufferData(gl.ARRAY_BUFFER, model.vertexPositions, gl.STATIC_DRAW);
-   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.indexBuffer);
-   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, model.indices, gl.STATIC_DRAW);
-   drawTriangles(model);
-   return model;
+   var box = {};
+   box.vertexPositions = new Float32Array(skyVertices);
+   box.indices = new Uint32Array(skyFaces);
+   box.vertexBuffer = gl.createBuffer();
+   box.indexBuffer = gl.createBuffer();
+   box.count = box.indices.length;
+   gl.bindBuffer(gl.ARRAY_BUFFER, box.vertexBuffer);
+   gl.bufferData(gl.ARRAY_BUFFER, box.vertexPositions, gl.STATIC_DRAW);
+   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, box.indexBuffer);
+   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, box.indices, gl.STATIC_DRAW);
+   drawTriangles(box);
+   return box;
 }
 
-function drawTriangles(model){
-   gl.bindBuffer(gl.ARRAY_BUFFER, model.coordsBuffer);
+function drawTriangles(tmpBox){
+   gl.bindBuffer(gl.ARRAY_BUFFER, tmpBox.vertexBuffer);
    gl.vertexAttribPointer(skyboxProgram.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
    //Draw
-   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.indexBuffer);
-   gl.drawElements(gl.TRIANGLES, model.count, gl.UNSIGNED_INT,0);
+   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tmpBox.indexBuffer);
+   gl.drawElements(gl.TRIANGLES, tmpBox.count, gl.UNSIGNED_INT,0);
 }
 
 //----------------------------------------------------------------------------------
