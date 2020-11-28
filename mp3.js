@@ -387,17 +387,16 @@ function draw() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // We'll use perspective
-    glMatrix.mat4.perspective(pMatrix,degToRad(45),
-                     gl.viewportWidth / gl.viewportHeight,
-                     0.1, 500.0);
+    mat4.perspective(pMatrix,degToRad(45), gl.viewportWidth / gl.viewportHeight, 0.1, 500.0);
 
     // Then generate the lookat matrix and initialize the view matrix to that view
-    glMatrix.mat4.lookAt(vMatrix,eyePt,viewPt,up);
+    mat4.lookAt(vMatrix,eyePt,viewPt,up);
 
     //Draw Mesh
     //ADD an if statement to prevent early drawing of myMesh
     if (myMesh.loaded()) {
         mvPush();
+        mat4.rotateY(mvMatrix, mvMatrix, degToRad(0));
         mat4.multiply(mvMatrix,vMatrix,mvMatrix);
         setMatrixUniforms();
         setLightUniforms(lightPosition,lAmbient,lDiffuse,lSpecular);
@@ -424,7 +423,7 @@ function setupMesh(filename) {
   })
   .catch(
     (reason) => {
-      console.log(`Handle rejected promise (${reason}) here.`);
+      console.log('Handle rejected promise ('+ reason +') here.');
   })
 }
 
@@ -599,7 +598,7 @@ function animate() {
  * Keeping drawing frames.
  */
 function tick() {
-    requestAnimFrame(tick);
+    requestAnimationFrame(tick);
     animate();
     draw();
 }
