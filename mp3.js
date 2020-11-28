@@ -80,7 +80,7 @@ var kEdgeWhite = [1.0,1.0,1.0];
 // Indicate reflective or refractive for vertex shader
 var textureType;
 // Indicate phong shading or texture mapping for fragment shader
-var phong;
+var solid;
 
 //-------------------------------------------------------------------------
 function handleKeyDown(event) {
@@ -119,6 +119,7 @@ function handleKeyUp(event) {
 function uploadModelViewMatrixToShader() {
   gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
   gl.uniformMatrix4fv(shaderProgram.vMatrixUniform, false, vMatrix);
+  gl.uniformMatrix4fv(shaderProgram.mMatrixUniform, false, mMatrix);
   gl.uniform3fv(shaderProgram.uniformEyeLoc, eyePt);
 }
 
@@ -148,7 +149,7 @@ function uploadNormalMatrixToShader() {
  */
 function uploadParametersToShader() {
   gl.uniform1i(shaderProgram.uniformTextureTypeLoc, textureType);
-  gl.uniform1i(shaderProgram.uniformPhongLoc, phong);
+  gl.uniform1i(shaderProgram.uniformPhongLoc, solid);
 }
 
 //----------------------------------------------------------------------------------
@@ -287,7 +288,7 @@ function setupShaders() {
   gl.linkProgram(shaderProgram);
 
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    alert("Failed to setup shaders");
+    alert(gl.getProgramInfoLog(shaderProgram));
   }
 
   gl.useProgram(shaderProgram);
@@ -299,6 +300,7 @@ function setupShaders() {
   gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
 
   shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+  shaderProgram.mMatrixUniform = gl.getUniformLocation(shaderProgram, "uMMatrix");
   shaderProgram.vMatrixUniform = gl.getUniformLocation(shaderProgram, "uVMatrix");
   shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
   shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
@@ -572,10 +574,10 @@ function drawTriangles(tmpBox){
   * Update any model transformations
   */
 function animate() {
-  if ((document.getElementById("phong").checked))
+  if ((document.getElementById("solid").checked))
   {
     textureType = 0;
-    phong = true;
+    solid = true;
   }
   else
   {
@@ -587,7 +589,7 @@ function animate() {
     {
       textureType = 2;
     }
-    phong = false;
+    solid = false;
   }
 }
 
