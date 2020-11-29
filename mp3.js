@@ -68,7 +68,8 @@ var lSpecular =[1,1,1];
 /** @global Ambient material color/intensity for Phong reflection */
 var kAmbient = [1.0,1.0,1.0];
 /** @global Diffuse material color/intensity for Phong reflection */
-var kTerrainDiffuse = [205.0/255.0,163.0/255.0,63.0/255.0];
+//var kTerrainDiffuse = [205.0/255.0,163.0/255.0,63.0/255.0];
+var kTerrainDiffuse = [];
 /** @global Specular material color/intensity for Phong reflection */
 var kSpecular = [0.5,0.5,0.5];
 /** @global Shininess exponent for Phong reflection */
@@ -573,6 +574,16 @@ function drawTriangles(tmpBox){
   * Update any model transformations
   */
 function animate() {
+  var sliderRed = document.getElementById("myRed");
+  var sliderGreen = document.getElementById("myGreen");
+  var sliderBlue = document.getElementById("myBlue");
+  while (kTerrainDiffuse.length != 0)
+  {
+    kTerrainDiffuse.pop();
+  }
+  kTerrainDiffuse.push(sliderRed.value/255);
+  kTerrainDiffuse.push(sliderGreen.value/255);
+  kTerrainDiffuse.push(sliderBlue.value/255);
   if ((document.getElementById("solid").checked))
   {
     textureType = 0;
