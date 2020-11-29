@@ -11,7 +11,6 @@
     attribute vec3 aVertexPosition;
 
     uniform mat4 uMVMatrix;
-    uniform mat4 uMMatrix;
     uniform mat4 uPMatrix;
     uniform mat4 uVMatrix;
     uniform mat3 uNMatrix;
@@ -31,13 +30,12 @@
     // Get the vertex position in eye coordinates
     vec4 vertexPositionEye4 = uMVMatrix * vec4(aVertexPosition, 1.0);
     vertexPositionEye3 = vertexPositionEye4.xyz / vertexPositionEye4.w;
-    normalEye = normalize(uNMatrix * aVertexNormal);
     vLight = (uVMatrix * vec4(uLightPosition, 1.0)).xyz;
 
-    vec3 vecN = normalize(mat3(uMMatrix) * normalEye);
-    vec3 eyePos = normalize(mat3(uMMatrix) * vertexPositionEye3);
-    vec3 reflectVar = reflect(eyePos, vecN);
-    vec3 refractVar = refract(eyePos, vecN, 1.00/1.52);
+    normalEye = normalize(uNMatrix * aVertexNormal);
+    vec3 eyePos = normalize(vertexPositionEye3 - uEye);
+    vec3 reflectVar = reflect(eyePos, normalEye);
+    vec3 refractVar = refract(eyePos, normalEye, 1.00/1.52);
 
     if(uTexture == 1)
     {
@@ -73,8 +71,7 @@ uniform bool uPhong;
 void main(void) {
 
   // Calculate the vector (l) to the light source
-  vec3 lightEye = vLight;
-  vec3 vectorToLightSource = normalize(lightEye - vertexPositionEye3);
+  vec3 vectorToLightSource = normalize(vLight - vertexPositionEye3);
   float diffuseLightWeightning = max(dot(normalEye, vectorToLightSource), 0.0);
   vec3 reflectionVector = normalize(reflect(-vectorToLightSource, normalEye));
   vec3 viewVectorEye = -normalize(vertexPositionEye3);
