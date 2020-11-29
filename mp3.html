@@ -23,8 +23,6 @@
 
     varying vec3 vertexPositionEye3;
     varying vec3 normalEye;
-    varying vec3 reflectVar;
-    varying vec3 refractVar;
     varying vec3 refVar;
     varying vec3 vLight;
 
@@ -36,11 +34,10 @@
     normalEye = normalize(uNMatrix * aVertexNormal);
     vLight = (uVMatrix * vec4(uLightPosition, 1.0)).xyz;
 
-    vec3 vecN = normalize(mat3(uMMatrix) * aVertexNormal);
-    vec3 positionWorld = (uMMatrix * vec4(aVertexPosition, 1.0)).xyz;
-    vec3 eyePos = normalize(positionWorld - uEye);
-    reflectVar = reflect(eyePos, vecN);
-    refractVar = refract(eyePos, vecN, 1.00/1.52);
+    vec3 vecN = normalize(mat3(uMMatrix) * normalEye);
+    vec3 eyePos = normalize(mat3(uMMatrix) * vertexPositionEye3);
+    vec3 reflectVar = reflect(eyePos, vecN);
+    vec3 refractVar = refract(eyePos, vecN, 1.00/1.52);
 
     if(uTexture == 1)
     {
@@ -51,9 +48,8 @@
       refVar = refractVar;
     }
 
-    // Sum up all three reflection components and send to the fragment shader
-
     gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
+
     }
 </script>
 
@@ -79,12 +75,8 @@ void main(void) {
   // Calculate the vector (l) to the light source
   vec3 lightEye = vLight;
   vec3 vectorToLightSource = normalize(lightEye - vertexPositionEye3);
-  // Calculate n dot l for diffuse lighting
-  float diffuseLightWeightning = max(dot(normalEye,
-                                  vectorToLightSource), 0.0);
-  // Calculate the reflection vector (r) that is needed for specular light
-  vec3 reflectionVector = normalize(reflect(-vectorToLightSource,
-                                           normalEye));
+  float diffuseLightWeightning = max(dot(normalEye, vectorToLightSource), 0.0);
+  vec3 reflectionVector = normalize(reflect(-vectorToLightSource, normalEye));
   vec3 viewVectorEye = -normalize(vertexPositionEye3);
   float rdotv = max(dot(reflectionVector, viewVectorEye), 0.0);
   float specularLightWeightning = pow(rdotv, uShininess);
@@ -137,9 +129,14 @@ void main(void) {
         <fieldset>
             <legend>Rendering Parameters</legend>
          <input type="radio" name="primitive" id="reflective" value="reflective"> Reflective
-         <input type="radio" name="primitive" id="refractive" value="refractive" checked> Refractive
-         <input type="radio" name="primitive" id="solid" value="solid"> Solid
+         <input type="radio" name="primitive" id="refractive" value="refractive"> Refractive
+         <input type="radio" name="primitive" id="solid" value="solid" checked> Solid
         </fieldset>
+        <div class="slidecontainer">
+          <input type="range" min="0" max="255" value="125" class="slider" id="myRed"> Red
+          <input type="range" min="0" max="255" value="125" class="slider" id="myGreen"> Green
+          <input type="range" min="0" max="255" value="125" class="slider" id="myBlue"> Blue
+        </div>
         </form>
 </body>
 
